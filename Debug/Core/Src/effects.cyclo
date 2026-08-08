@@ -1,0 +1,17 @@
+../Core/Src/effects.c:9:6:DrawSmiley	1
+../Core/Src/effects.c:34:6:DrawHeart	1
+../Core/Src/effects.c:75:6:Heart_Tick	3
+../Core/Src/effects.c:88:6:ModeTransition	3
+../Core/Src/effects.c:101:6:Fire_Tick	18
+../Core/Src/effects.c:175:6:Matrix_Init	3
+../Core/Src/effects.c:183:6:Matrix_Tick	10
+../Core/Src/effects.c:220:6:Stars_Init	3
+../Core/Src/effects.c:229:6:Stars_Tick	12
+../Core/Src/effects.c:283:6:ColorWheel	3
+../Core/Src/effects.c:309:6:Rainbow_Tick	3
+../Core/Src/effects.c:328:6:ChangeBallColor	7
+../Core/Src/effects.c:339:6:DrawSmoothBall	5
+../Core/Src/effects.c:359:6:Balls_Init	1
+../Core/Src/effects.c:373:6:Balls_Tick	14
+../Core/Src/effects.c:442:6:Rain_Init	3
+../Core/Src/effects.c:447:6:Rain_Tick	24

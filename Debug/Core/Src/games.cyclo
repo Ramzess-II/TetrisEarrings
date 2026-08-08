@@ -1,0 +1,15 @@
+../Core/Src/games.c:34:6:DrawGame	11
+../Core/Src/games.c:61:9:CheckCollision	9
+../Core/Src/games.c:80:6:LockPiece	8
+../Core/Src/games.c:95:6:ClearLines	8
+../Core/Src/games.c:119:6:GameOverAnim	5
+../Core/Src/games.c:144:6:SpawnPiece	4
+../Core/Src/games.c:171:6:BotMove	8
+../Core/Src/games.c:198:6:GameTick	4
+../Core/Src/games.c:224:6:Snake_SpawnFood	5
+../Core/Src/games.c:242:6:Snake_Init	1
+../Core/Src/games.c:256:9:Snake_IsSafe	8
+../Core/Src/games.c:268:6:Snake_BotLogic	12
+../Core/Src/games.c:315:6:Snake_GameOverAnim	4
+../Core/Src/games.c:336:6:Snake_Tick	8
+../Core/Src/games.c:383:6:Tetris_Init	3
