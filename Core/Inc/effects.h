@@ -22,6 +22,7 @@ extern "C" {
 #define rain_splashes (state.r.splashes)
 //----------------------- объявим функции ------------------------------------//
 void ModeTransition(void);
+void ShutdownAnim(void);
 void Heart_Tick(void);
 void DrawSmiley(void);
 void Fire_Tick(void);

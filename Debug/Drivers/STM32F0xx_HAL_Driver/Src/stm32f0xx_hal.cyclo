@@ -1,8 +1,8 @@
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:141:19:HAL_Init	1
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:165:19:HAL_DeInit	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:188:13:HAL_MspInit	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:199:13:HAL_MspDeInit	1
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:165:19:HAL_DeInit	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:222:26:HAL_InitTick	3
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:141:19:HAL_Init	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:281:13:HAL_IncTick	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:292:17:HAL_GetTick	1
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.c:301:10:HAL_GetTickPrio	1

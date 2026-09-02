@@ -52,6 +52,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 TetrisEarrings.list \
 
+OBJCOPY_HEX += \
+TetrisEarrings.hex \
+
 
 # All Target
 all: main-build
@@ -75,12 +78,17 @@ TetrisEarrings.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+TetrisEarrings.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "TetrisEarrings.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) TetrisEarrings.elf TetrisEarrings.list TetrisEarrings.map default.size.stdout
+	-$(RM) TetrisEarrings.elf TetrisEarrings.hex TetrisEarrings.list TetrisEarrings.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

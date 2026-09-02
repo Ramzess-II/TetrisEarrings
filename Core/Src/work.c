@@ -48,8 +48,7 @@ void Work (void){
     // Кнопка удерживается
     else if (btn_state == GPIO_PIN_SET && btn_prev_state == GPIO_PIN_SET) {
         if (current_time - btn_press_time > 1000) { // Длинное нажатие (1 секунда) - ВЫКЛЮЧЕНИЕ
-            ClearScreen();
-            UpdateMatrix();
+            ShutdownAnim();
             HAL_GPIO_WritePin(PowerOn_GPIO_Port, PowerOn_Pin, GPIO_PIN_RESET);
             while(1); // Ждем обесточивания платы
         }
@@ -83,8 +82,7 @@ void Work (void){
             uint16_t adc_val = HAL_ADC_GetValue(&hadc); // Читаем результат
             if (adc_val < 2700) {
                 // Напряжение упало — спасаем аккумулятор, выключаемся!
-                ClearScreen();
-                UpdateMatrix();
+                ShutdownAnim();
                 HAL_GPIO_WritePin(PowerOn_GPIO_Port, PowerOn_Pin, GPIO_PIN_RESET);
                 while(1);
             }

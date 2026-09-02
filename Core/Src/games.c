@@ -141,6 +141,87 @@ void GameOverAnim(void) {
   }
 }
 
+// Бот-"ИИ": перебирает все повороты и колонки для текущей фигуры,
+// на лету укладывает её в копию стакана и оценивает результат простой
+// эвристикой (высота стакана, дыры под фигурой, перепад высот колонок,
+// собранные линии) - в духе классических Tetris-ботов (Dellacherie/El-Tetris),
+// но на целых числах, без float, чтобы не раздувать прошивку на Cortex-M0.
+static void ChooseBestMove(void) {
+  int16_t best_score = -32000;
+  int8_t best_rot = 0;
+  int8_t best_x = current_x;
+
+  for (int8_t rot = 0; rot < 4; rot++) {
+    for (int8_t x = -3; x < MAX_X + 3; x++) {
+      if (CheckCollision(x, MAX_Y, rot)) continue; // Фигура тут не помещается по ширине
+
+      // Находим, на какую строку фигура реально упадет
+      int8_t y = MAX_Y;
+      while (!CheckCollision(x, y - 1, rot)) y--;
+
+      // Пробуем уложить фигуру в копию стакана
+      uint8_t temp[MAX_Y][MAX_X];
+      for (int8_t ty = 0; ty < MAX_Y; ty++) {
+        for (int8_t tx = 0; tx < MAX_X; tx++) temp[ty][tx] = gameBoard[ty][tx];
+      }
+
+      uint16_t piece = tetrominoes[current_id][rot];
+      for (int8_t px = 0; px < 4; px++) {
+        for (int8_t py = 0; py < 4; py++) {
+          if (piece & (1 << (15 - (py * 4 + px)))) {
+            int8_t bx = x + px;
+            int8_t by = y - py;
+            if (bx >= 0 && bx < MAX_X && by >= 0 && by < MAX_Y) temp[by][bx] = 1;
+          }
+        }
+      }
+
+      // Высота каждой колонки и дыры под фигурами
+      int8_t heights[MAX_X];
+      int16_t holes = 0;
+      for (int8_t tx = 0; tx < MAX_X; tx++) {
+        int8_t top = -1;
+        for (int8_t ty = MAX_Y - 1; ty >= 0; ty--) {
+          if (temp[ty][tx] != 0) { top = ty; break; }
+        }
+        heights[tx] = top + 1;
+        for (int8_t ty = 0; ty < top; ty++) {
+          if (temp[ty][tx] == 0) holes++;
+        }
+      }
+
+      int16_t agg_height = 0, bumpiness = 0;
+      for (int8_t tx = 0; tx < MAX_X; tx++) {
+        agg_height += heights[tx];
+        if (tx > 0) {
+          int8_t d = heights[tx] - heights[tx - 1];
+          bumpiness += (d < 0) ? -d : d;
+        }
+      }
+
+      int16_t lines = 0;
+      for (int8_t ty = 0; ty < MAX_Y; ty++) {
+        uint8_t full = 1;
+        for (int8_t tx = 0; tx < MAX_X; tx++) {
+          if (temp[ty][tx] == 0) { full = 0; break; }
+        }
+        if (full) lines++;
+      }
+
+      int16_t score = (lines * 8) - (agg_height * 4) - (holes * 6) - (bumpiness * 2);
+
+      if (score > best_score) {
+        best_score = score;
+        best_rot = rot;
+        best_x = x;
+      }
+    }
+  }
+
+  target_rot = best_rot;
+  target_x = best_x;
+}
+
 void SpawnPiece(void) {
   // 1. Генерируем параметры для новой фигуры
   current_id = rand() % 7;
@@ -148,8 +229,7 @@ void SpawnPiece(void) {
   current_x = 2;
   current_y = MAX_Y;
 
-  target_rot = rand() % 4;
-  target_x = rand() % (MAX_X - 1);
+  ChooseBestMove(); // Вместо случайной цели - осознанный выбор поворота и колонки
 
   // 2. Проверяем, есть ли место на поле
   if (CheckCollision(current_x, MAX_Y - 1, current_rotation)) {
@@ -162,12 +242,11 @@ void SpawnPiece(void) {
 	  current_rotation = 0;
 	  current_x = 2;
 	  current_y = MAX_Y;
-	  target_rot = rand() % 4;
-	  target_x = rand() % (MAX_X - 1);
+	  ChooseBestMove();
   }
 }
 
-// Логика "глупого" бота
+// Пошагово ведет фигуру к цели, выбранной в ChooseBestMove (поворот, затем сдвиг)
 void BotMove(void) {
   // Сначала пытаемся повернуть фигуру, если цель еще не достигнута
   if (current_rotation != target_rot) {

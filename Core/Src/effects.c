@@ -97,6 +97,59 @@ void ModeTransition(void) {
     HAL_Delay(300); // Пауза в полной темноте перед новым режимом
 }
 
+// --- АНИМАЦИЯ ВЫКЛЮЧЕНИЯ ("СХЛОПЫВАНИЕ", КАК У СТАРЫХ ЭЛТ-ТЕЛЕВИЗОРОВ) ---
+// Экран стягивается по вертикали в узкую полосу, затем по горизонтали - в яркую
+// точку по центру, которая вспыхивает и гаснет. Вызывается один раз перед тем,
+// как окончательно погасить матрицу и снять питание.
+void ShutdownAnim(void) {
+    const uint8_t r = 18, g = 26, b = 18; // Холодноватое бело-зеленое свечение, как у люминофора ЭЛТ
+
+    // 1. Схлопываем экран по вертикали к двум центральным строкам (4 и 5)
+    for (int8_t h = MAX_Y / 2 - 1; h >= 0; h--) {
+        ClearScreen();
+        for (int8_t y = 0; y < MAX_Y; y++) {
+            int8_t dist = (y <= 4) ? (4 - y) : (y - 5);
+            if (dist <= h) {
+                for (int8_t x = 0; x < MAX_X; x++) SetPixel(x, y, r, g, b);
+            }
+        }
+        UpdateMatrix();
+        HAL_Delay(35);
+    }
+
+    // 2. Стягиваем получившуюся полосу по горизонтали к центру (колонки 2 и 3)
+    for (int8_t w = MAX_X / 2 - 1; w >= 0; w--) {
+        ClearScreen();
+        for (int8_t x = 0; x < MAX_X; x++) {
+            int8_t dist = (x <= 2) ? (2 - x) : (x - 3);
+            if (dist <= w) {
+                SetPixel(x, 4, r, g, b);
+                SetPixel(x, 5, r, g, b);
+            }
+        }
+        UpdateMatrix();
+        HAL_Delay(35);
+    }
+
+    // 3. Короткая яркая вспышка получившейся точки...
+    SetPixel(2, 4, 45, 65, 45); SetPixel(3, 4, 45, 65, 45);
+    SetPixel(2, 5, 45, 65, 45); SetPixel(3, 5, 45, 65, 45);
+    UpdateMatrix();
+    HAL_Delay(60);
+
+    // 4. ...и плавное угасание точки в полную темноту
+    for (uint8_t fade = 5; fade > 0; fade--) {
+        uint8_t fr = (r * fade) / 5, fg = (g * fade) / 5, fb = (b * fade) / 5;
+        SetPixel(2, 4, fr, fg, fb); SetPixel(3, 4, fr, fg, fb);
+        SetPixel(2, 5, fr, fg, fb); SetPixel(3, 5, fr, fg, fb);
+        UpdateMatrix();
+        HAL_Delay(40);
+    }
+
+    ClearScreen();
+    UpdateMatrix();
+}
+
 // ================= РЕЖИМ: ОГОНЬ (Динамичный, с отрывом пламени) =================
 void Fire_Tick(void) {
     // 1. Остывание и движение вверх (читаем сверху вниз)
@@ -337,10 +390,21 @@ void ChangeBallColor(uint8_t idx) {
 
 // ================= ФУНКЦИЯ ПЛАВНОЙ ОТРИСОВКИ МЯЧИКА (Anti-Aliasing) =================
 void DrawSmoothBall(int16_t x, int16_t y, uint8_t r, uint8_t g, uint8_t b) {
-    int8_t px = x / 100;          // Основной пиксель X
-    int8_t py = y / 100;          // Основной пиксель Y
-    uint8_t rx = x % 100;         // Смещение от 0 до 99
-    uint8_t ry = y % 100;         // Смещение от 0 до 99
+    // "Пол"-деление и остаток вместо обычных / и % — те округляют к нулю и для
+    // отрицательных x/y дают отрицательный остаток, из-за чего rx/ry (uint8_t)
+    // заворачиваются в огромные значения и веса w00..w11 вылетают за 0..100.
+    int16_t px16 = x / 100;
+    int16_t rx16 = x % 100;
+    if (rx16 < 0) { rx16 += 100; px16--; }
+
+    int16_t py16 = y / 100;
+    int16_t ry16 = y % 100;
+    if (ry16 < 0) { ry16 += 100; py16--; }
+
+    int8_t px = (int8_t)px16;     // Основной пиксель X
+    int8_t py = (int8_t)py16;     // Основной пиксель Y
+    uint8_t rx = (uint8_t)rx16;   // Смещение от 0 до 99
+    uint8_t ry = (uint8_t)ry16;   // Смещение от 0 до 99
 
     // Вычисляем процент свечения (от 0 до 100) для 4 соседних светодиодов
     uint8_t w00 = ((100 - rx) * (100 - ry)) / 100; // Левый верхний
@@ -423,6 +487,19 @@ void Balls_Tick(void) {
                 balls_data[j].x += balls_data[j].dx * 5;
                 balls_data[j].y += balls_data[j].dy * 5;
 
+                // Раздвижка после столкновения может вытолкнуть мячик за поле
+                // (например, если он ударился о шарик сразу после отскока от стены) —
+                // возвращаем его в границы, иначе DrawSmoothBall получит "залётные" координаты.
+                if (balls_data[i].x < 0) balls_data[i].x = 0;
+                else if (balls_data[i].x > max_x) balls_data[i].x = max_x;
+                if (balls_data[i].y < 0) balls_data[i].y = 0;
+                else if (balls_data[i].y > max_y) balls_data[i].y = max_y;
+
+                if (balls_data[j].x < 0) balls_data[j].x = 0;
+                else if (balls_data[j].x > max_x) balls_data[j].x = max_x;
+                if (balls_data[j].y < 0) balls_data[j].y = 0;
+                else if (balls_data[j].y > max_y) balls_data[j].y = max_y;
+
                 ChangeBallColor(i);
                 ChangeBallColor(j);
             }
@@ -451,7 +528,7 @@ void Rain_Tick(void) {
             if (!rain_drops[i].active) {
                 rain_drops[i].x = rand() % MAX_X;
                 rain_drops[i].y = (MAX_Y - 1) * 100;
-                rain_drops[i].speed = 15 + (rand() % 10);
+                rain_drops[i].speed = 18 + (rand() % 12); // Было 15 + rand()%10, ускорили падение примерно на 20%
                 rain_drops[i].active = 1;
                 break;
             }

@@ -1,5 +1,5 @@
-../Core/Src/ledMatrix.c:9:6:HAL_TIM_PWM_PulseFinishedCallback	16	static
-../Core/Src/ledMatrix.c:15:10:GetLEDIndex	16	static
-../Core/Src/ledMatrix.c:25:6:SetPixel	40	static
-../Core/Src/ledMatrix.c:39:6:UpdateMatrix	16	static
+../Core/Src/ledMatrix.c:9:6:HAL_TIM_PWM_PulseFinishedCallback	8	static
+../Core/Src/ledMatrix.c:15:10:GetLEDIndex	0	static
+../Core/Src/ledMatrix.c:25:6:SetPixel	16	static
+../Core/Src/ledMatrix.c:39:6:UpdateMatrix	8	static
 ../Core/Src/ledMatrix.c:46:6:ClearScreen	24	static
